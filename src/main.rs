@@ -1,104 +1,115 @@
+use colored::*;
 use rand::prelude::*;
 use rayon::prelude::*;
 
 fn main() {
-    let height = 160;
-    let width = 200;
-    let mut bombs = vec![vec![0; width]; height];
+    let height = 30;
+    let width = 50;
+    let mut bombs = vec![0; width * height];
 
     let mut counts = bombs.clone();
 
-    bombs.par_iter_mut().for_each(|row| {
+    bombs.par_iter_mut().for_each(|item| {
         let mut rng = rand::thread_rng();
-        for item in row.iter_mut().take(width) {
-            if rng.gen::<f32>() < 0.1 {
-                *item = 1;
-            }
+        let seed = rng.gen::<f32>();
+        if seed < 0.1 {
+            *item = 1;
         }
     });
 
-    for row in 0..height {
-        for col in 0..width {
-            counts[row][col] = 0;
-            if row == 0 {
-                if col == 0 {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row + 1][col]
-                        + bombs[row][col + 1]
-                        + bombs[row + 1][col + 1];
-                } else if col == width - 1 {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row + 1][col]
-                        + bombs[row][col - 1]
-                        + bombs[row + 1][col - 1];
-                } else {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row + 1][col]
-                        + bombs[row][col + 1]
-                        + bombs[row + 1][col + 1]
-                        + bombs[row][col - 1]
-                        + bombs[row + 1][col - 1];
-                }
-            } else if row == height - 1 {
-                if col == 0 {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row][col + 1]
-                        + bombs[row - 1][col + 1]
-                        + bombs[row - 1][col];
-                } else if col == width - 1 {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row][col - 1]
-                        + bombs[row - 1][col - 1]
-                        + bombs[row - 1][col];
-                } else {
-                    counts[row][col] = bombs[row][col]
-                        + bombs[row][col + 1]
-                        + bombs[row - 1][col + 1]
-                        + bombs[row - 1][col]
-                        + bombs[row - 1][col - 1]
-                        + bombs[row][col - 1];
-                }
-            } else if col == 0 {
-                counts[row][col] = bombs[row][col]
-                    + bombs[row - 1][col]
-                    + bombs[row - 1][col + 1]
-                    + bombs[row][col + 1]
-                    + bombs[row + 1][col + 1]
-                    + bombs[row + 1][col];
+    counts.par_iter_mut().enumerate().for_each(|(i, value)| {
+        let col = i % width;
+        let row = i / width;
+        *value = 0;
+        if row == 0 {
+            if col == 0 {
+                *value = bombs[row * width + col]
+                    + bombs[row * width + col + 1]
+                    + bombs[(row + 1) * width + col]
+                    + bombs[(row + 1) * width + col + 1];
             } else if col == width - 1 {
-                counts[row][col] = bombs[row][col]
-                    + bombs[row - 1][col]
-                    + bombs[row - 1][col - 1]
-                    + bombs[row][col - 1]
-                    + bombs[row + 1][col - 1]
-                    + bombs[row + 1][col];
+                *value = bombs[row * width + col]
+                    + bombs[(row + 1) * width + col]
+                    + bombs[row * width + col - 1]
+                    + bombs[(row + 1) * width + col - 1];
             } else {
-                counts[row][col] = bombs[row][col]
-                    + bombs[row - 1][col]
-                    + bombs[row - 1][col + 1]
-                    + bombs[row][col + 1]
-                    + bombs[row + 1][col + 1]
-                    + bombs[row + 1][col]
-                    + bombs[row - 1][col - 1]
-                    + bombs[row][col - 1]
-                    + bombs[row + 1][col - 1];
+                *value = bombs[row * width + col]
+                    + bombs[(row + 1) * width + col]
+                    + bombs[row * width + col + 1]
+                    + bombs[(row + 1) * width + col + 1]
+                    + bombs[row * width + col - 1]
+                    + bombs[(row + 1) * width + col - 1];
             }
-            if bombs[row][col] == 1 {
-                counts[row][col] = -1;
+        } else if row == height - 1 {
+            if col == 0 {
+                *value = bombs[row * width + col]
+                    + bombs[row * width + col + 1]
+                    + bombs[(row - 1) * width + col + 1]
+                    + bombs[(row - 1) * width + col];
+            } else if col == width - 1 {
+                *value = bombs[row * width + col]
+                    + bombs[row * width + col - 1]
+                    + bombs[(row - 1) * width + col - 1]
+                    + bombs[(row - 1) * width + col];
+            } else {
+                *value = bombs[row * width + col]
+                    + bombs[row * width + col + 1]
+                    + bombs[(row - 1) * width + col + 1]
+                    + bombs[(row - 1) * width + col]
+                    + bombs[(row - 1) * width + col - 1]
+                    + bombs[row * width + col - 1];
             }
+        } else if col == 0 {
+            *value = bombs[row * width + col]
+                + bombs[(row - 1) * width + col]
+                + bombs[(row - 1) * width + col + 1]
+                + bombs[row * width + col + 1]
+                + bombs[(row + 1) * width + col + 1]
+                + bombs[(row + 1) * width + col]
+        } else if col == width - 1 {
+            *value = bombs[row * width + col]
+                + bombs[(row - 1) * width + col]
+                + bombs[(row - 1) * width + col - 1]
+                + bombs[row * width + col - 1]
+                + bombs[(row + 1) * width + col - 1]
+                + bombs[(row + 1) * width + col]
+        } else {
+            *value = bombs[row * width + col]
+                + bombs[(row - 1) * width + col]
+                + bombs[(row - 1) * width + col + 1]
+                + bombs[row * width + col + 1]
+                + bombs[(row + 1) * width + col + 1]
+                + bombs[(row + 1) * width + col]
+                + bombs[(row - 1) * width + col - 1]
+                + bombs[row * width + col - 1]
+                + bombs[(row + 1) * width + col - 1];
         }
-    }
+        if bombs[i] == 1 {
+            *value = -1;
+        }
+    });
 
-    for i in counts {
-        for j in i {
-            if j == 0 {
-                print!(" ");
-            } else if j == -1 {
-                print!("B");
-            } else {
-                print!("{}", j);
-            }
+    for (i, count) in counts.iter().enumerate() {
+        match count {
+            //-1 => print!("{}", "B".black().bold().on_color("red")),
+            //0 => print!("{}", " ".on_color("white")),
+            //1 => print!("{}", "1".blue().bold().on_color("white")),
+            //2 => print!("{}", "2".green().bold().on_color("white")),
+            //3 => print!("{}", "3".yellow().bold().on_color("white")),
+            //4 => print!("{}", "4".red().bold().on_color("white")),
+            //5 => print!("{}", "5".black().bold().on_color("white")),
+            //_ => print!("{}", counts[i]),
+            -1 => print!("{}", "  ".on_color("black")),
+            0 => print!("{}", "  ".on_color("white")),
+            1 => print!("{}", "  ".on_color("blue")),
+            2 => print!("{}", "  ".on_color("green")),
+            3 => print!("{}", "  ".on_color("yellow")),
+            4 => print!("{}", "  ".on_color("red")),
+            5 => print!("{}", "  ".black().bold().on_color("white")),
+            _ => print!("{}", counts[i]),
         }
-        println!();
+        if (i + 1) % width == 0 && i > 0 {
+            println!();
+        }
     }
 }
